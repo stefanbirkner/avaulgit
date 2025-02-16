@@ -1,0 +1,4 @@
+org.springframework.boot.env.PropertySourceLoader=\
+  com.github.stefanbirkner.avaulgit.YamlPropertySourceLoaderWithAnsibleVaultSupport
+org.springframework.boot.env.EnvironmentPostProcessor=\
+  com.github.stefanbirkner.avaulgit.VaultProcessor

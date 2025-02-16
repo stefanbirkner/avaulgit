@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+  <!-- In the end the method is called by Spring Boot and it always provides
+       a value for the parameter "environment". -->
+  <Match>
+    <Class name="com.github.stefanbirkner.avaulgit.VaultProcessor" />
+    <Method name="createDecryptor" />
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE" />
+  </Match>
+</FindBugsFilter>
