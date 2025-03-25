@@ -16,6 +16,7 @@ import javax.crypto.spec.*;
  * Vault</a>.
  */
 class Decryptor {
+    private static final HexFormat HEX_PARSER = HexFormat.of();
     private static final String SUPPORTED_HEADER = "$ANSIBLE_VAULT;1.1;AES256\n";
     private final String vaultPassword;
 
@@ -43,9 +44,9 @@ class Decryptor {
             .replace("\r", "");
         var unhexlifiedVaultText = unhexlifyToString(vaultText);
         var parts = split(unhexlifiedVaultText);
-        var salt = unhexlify(parts[0].toCharArray());
-        var hmac = unhexlify(parts[1].toCharArray());
-        var ciphertext = unhexlify(parts[2].toCharArray());
+        var salt = unhexlify(parts[0]);
+        var hmac = unhexlify(parts[1]);
+        var ciphertext = unhexlify(parts[2]);
         return getPlaintext(salt, hmac, ciphertext);
     }
 
@@ -81,50 +82,22 @@ class Decryptor {
     private String unhexlifyToString(
         String hexlifiedData
     ) throws InvalidVaultTextException {
-        var hexlifiedDataAsChars = hexlifiedData.toCharArray();
-        if (hexlifiedDataAsChars.length % 2 != 0)
-            throw new InvalidVaultTextException(
-                "The vault text is corrupt because it has an odd length of "
-                    + hexlifiedDataAsChars.length + " characters.");
-        var raw = unhexlify(hexlifiedDataAsChars);
+        var raw = unhexlify(hexlifiedData);
         return new String(raw, UTF_8);
     }
 
     // Java port of "unhexlify" of
     // https://docs.python.org/3/library/binascii.html
     private byte[] unhexlify(
-        char[] hexlifiedData
+        String hexlifiedData
     ) throws InvalidVaultTextException {
-        var data = new byte[hexlifiedData.length / 2];
-        for (var i = 0; i < hexlifiedData.length; i += 2)
-            data[i / 2] = asByte(
-                hexlifiedData[i],
-                hexlifiedData[i + 1]);
-        return data;
-    }
-
-    private byte asByte(
-        char first,
-        char second
-    ) throws InvalidVaultTextException {
-        var upperNibble = hexToInt(first);
-        var lowerNibble = hexToInt(second);
-        return (byte) ((upperNibble << 4) | lowerNibble);
-    }
-
-    private int hexToInt(
-        char c
-    ) throws InvalidVaultTextException {
-        if (c >= '0' && c <= '9')
-            return c - '0';
-        else if (c >= 'a' && c <= 'f')
-            return 10 + (c - 'a');
-        else if (c >= 'A' && c <= 'F')
-            return 10 + (c - 'A');
-        else
+        try {
+            return HEX_PARSER.parseHex(hexlifiedData);
+        } catch (IllegalArgumentException e) {
             throw new InvalidVaultTextException(
-                "The vault text is not valid because it contains a"
-                    + " character '" + c + "'.");
+                "The vault text is corrupted.",
+                e);
+        }
     }
 
     private String getPlaintext(

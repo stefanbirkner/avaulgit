@@ -72,8 +72,9 @@ class DecryptorTest {
             3833
             """))
             .isInstanceOf(InvalidVaultTextException.class)
-            .hasMessage("The vault text is not valid because it contains a"
-                + " character 'r'.");
+            .hasMessage("The vault text is corrupted.")
+            .hasRootCauseInstanceOf(NumberFormatException.class)
+            .hasRootCauseMessage("not a hexadecimal digit: \"r\" = 114");
     }
 
     @Test
@@ -102,8 +103,9 @@ class DecryptorTest {
             303
             """))
             .isInstanceOf(InvalidVaultTextException.class)
-            .hasMessage("The vault text is corrupt because it has an odd"
-                + " length of 323 characters.");
+            .hasMessage("The vault text is corrupted.")
+            .hasRootCauseInstanceOf(IllegalArgumentException.class)
+            .hasRootCauseMessage("string length not even: 323");
     }
 
     @Test

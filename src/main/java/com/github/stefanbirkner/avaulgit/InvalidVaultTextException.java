@@ -9,4 +9,11 @@ class InvalidVaultTextException extends Exception {
     ) {
         super(message);
     }
+
+    InvalidVaultTextException(
+        String message,
+        Throwable cause
+    ) {
+        super(message, cause);
+    }
 }
