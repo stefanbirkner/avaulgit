@@ -18,7 +18,7 @@ class DecryptorTest {
     private final Decryptor decryptor = new Decryptor("the-secret-vault-key");
 
     @Test
-    void encrypted_string_is_decrypted_to_its_plain_test() throws Exception {
+    void encrypted_string_is_decrypted_to_its_plain_text() throws Exception {
         var plainText = decryptor.decrypt(VAULT_TEXT_FOR_ORIGINAL_SECRET);
 
         assertThat(plainText).isEqualTo("original secret");
