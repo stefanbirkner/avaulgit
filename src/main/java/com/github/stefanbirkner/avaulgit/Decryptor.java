@@ -119,6 +119,8 @@ class Decryptor {
             return c - '0';
         else if (c >= 'a' && c <= 'f')
             return 10 + (c - 'a');
+        else if (c >= 'A' && c <= 'F')
+            return 10 + (c - 'A');
         else
             throw new InvalidVaultTextException(
                 "The vault text is not valid because it contains a"

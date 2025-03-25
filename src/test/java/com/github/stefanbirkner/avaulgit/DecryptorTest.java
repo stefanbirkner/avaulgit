@@ -15,11 +15,27 @@ class DecryptorTest {
         3062313433373737330a363931323135336163656337393630353536396530383366663030613738
         3833
         """;
+    private static final String VAULT_TEXT_FOR_ORIGINAL_SECRET_WITH_UPPER_CASE_HEX_ENCODING = """
+        $ANSIBLE_VAULT;1.1;AES256
+        33374630363236353839324136323337414643394443454632423245363339343537453937414139
+        4430354636313138364344443337453745383231454234430A413732363744383845413341454331
+        30323743434135383930323538354537324133413736433737343341373035424239453738393542
+        3042313433373737330A363931323135334143454337393630353536394530383346463030413738
+        3833
+        """;
     private final Decryptor decryptor = new Decryptor("the-secret-vault-key");
 
     @Test
-    void encrypted_string_is_decrypted_to_its_plain_text() throws Exception {
+    void encrypted_string_with_lower_case_hex_digits_is_decrypted_to_its_plain_text() throws Exception {
         var plainText = decryptor.decrypt(VAULT_TEXT_FOR_ORIGINAL_SECRET);
+
+        assertThat(plainText).isEqualTo("original secret");
+    }
+
+    @Test
+    void encrypted_string_with_upper_case_hex_digits_is_decrypted_to_its_plain_text() throws Exception {
+        var plainText = decryptor.decrypt(
+            VAULT_TEXT_FOR_ORIGINAL_SECRET_WITH_UPPER_CASE_HEX_ENCODING);
 
         assertThat(plainText).isEqualTo("original secret");
     }
