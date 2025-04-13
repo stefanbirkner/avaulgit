@@ -66,12 +66,12 @@ Maven, please add
     <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>avaulgit</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.2</version>
     </dependency>
 
 to your `pom.xml`. If you're using Gradle, please add
 
-    implementation 'com.github.stefanbirkner:avaulgit:1.0.1'
+    implementation 'com.github.stefanbirkner:avaulgit:1.0.2'
 
 to your `build.gradle` file.
 
