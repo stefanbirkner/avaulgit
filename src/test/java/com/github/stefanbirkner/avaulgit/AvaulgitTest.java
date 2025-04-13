@@ -6,16 +6,26 @@ import static java.lang.System.setProperty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 // Test the complete feature with the happy path and the major failure cases.
 @DisplayNameGeneration(ReplaceUnderscores.class)
 public class AvaulgitTest {
     private final SpringApplication application = new SpringApplication(CustomApplication.class);
+
+    @BeforeEach
+    void addConfigurationSource() {
+        application.addPrimarySources(List.of(CustomConfiguration.class));
+    }
 
     @Test
     void encrypted_password_is_decrypted() throws Exception {
@@ -51,13 +61,36 @@ public class AvaulgitTest {
                 + " 'vault.password' is not set.");
     }
 
-    static class CustomApplication {
-        final String password;
+    public static class CustomApplication {
+        public final CustomConfiguration configuration;
+        public final String password;
 
         CustomApplication(
+            CustomConfiguration configuration,
             @Value("${database.password}") String password
         ) {
+            this.configuration = configuration;
             this.password = password;
         }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConfigurationProperties("custom")
+    public static class CustomConfiguration {
+        private List<User> users;
+
+        public List<User> getUsers() {
+            return users;
+        }
+
+        public void setUsers(List<User> users) {
+            this.users = users;
+        }
+    }
+
+    public static record User(
+        String name,
+        String password
+    ) {
     }
 }
