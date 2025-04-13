@@ -19,40 +19,48 @@ public class VaultProcessor implements EnvironmentPostProcessor {
         ConfigurableEnvironment environment,
         SpringApplication application
     ) {
-        var decryptedSecrets = decryptSecrets(environment);
-        if (!decryptedSecrets.isEmpty())
-            addDecryptedSecrets(environment, decryptedSecrets);
+        for (var propertySource : getEnumerablePropertySources(environment)) {
+            decryptProperties(environment, propertySource);
+        }
     }
 
-    private HashMap<String, Object> decryptSecrets(
-        ConfigurableEnvironment environment
+    private void decryptProperties(
+        ConfigurableEnvironment environment,
+        EnumerablePropertySource<?> propertySource
     ) {
+        var atLeastOnePropertyWasASecret = false;
         Decryptor decryptor = null;
-        var decryptedSecrets = new HashMap<String, Object>();
-        for (var propertySource : getEnumerablePropertySources(environment)) {
-            for (var name : propertySource.getPropertyNames()) {
-                var property = propertySource.getProperty(name);
-                if (property instanceof Secret secret) {
-                    try {
-                        if (decryptor == null)
-                            decryptor = createDecryptor(environment);
-                        var plaintext = decryptor.decrypt(secret.value());
-                        decryptedSecrets.put(name, plaintext);
-                    } catch (WrongSignatureException e) {
-                        throw new RuntimeException(
-                            "Cannot decrypt property '" + name + "'. Either the"
-                                + " vault password is wrong or the property's"
-                                + " value is corrupt.",
-                            e);
-                    } catch (GeneralSecurityException | InvalidVaultTextException e) {
-                        throw new RuntimeException(
-                            "Cannot decrypt property '" + name + "'.",
-                            e);
-                    }
+        var decryptedProperties = new HashMap<String, Object>();
+        for (var name : propertySource.getPropertyNames()) {
+            var property = propertySource.getProperty(name);
+            if (property instanceof Secret secret) {
+                try {
+                    if (decryptor == null)
+                        decryptor = createDecryptor(environment);
+                    var plaintext = decryptor.decrypt(secret.value());
+                    decryptedProperties.put(name, plaintext);
+                    atLeastOnePropertyWasASecret = true;
+                } catch (WrongSignatureException e) {
+                    throw new RuntimeException(
+                        "Cannot decrypt property '" + name + "'. Either the"
+                            + " vault password is wrong or the property's"
+                            + " value is corrupt.",
+                        e);
+                } catch (GeneralSecurityException | InvalidVaultTextException e) {
+                    throw new RuntimeException(
+                        "Cannot decrypt property '" + name + "'.",
+                        e);
                 }
             }
+            else
+                decryptedProperties.put(name, property);
         }
-        return decryptedSecrets;
+        if (atLeastOnePropertyWasASecret)
+            environment.getPropertySources().replace(
+                propertySource.getName(),
+                new MapPropertySource(
+                    propertySource.getName() + " decrypted",
+                    decryptedProperties));
     }
 
     private Decryptor createDecryptor(
@@ -72,13 +80,5 @@ public class VaultProcessor implements EnvironmentPostProcessor {
             .filter(EnumerablePropertySource.class::isInstance)
             .map(EnumerablePropertySource.class::cast)
             .toList();
-    }
-
-    private void addDecryptedSecrets(
-        ConfigurableEnvironment environment,
-        Map<String, Object> decryptedSecrets
-    ) {
-        environment.getPropertySources().addFirst(
-            new MapPropertySource("decrypted secrets", decryptedSecrets));
     }
 }
